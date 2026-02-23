@@ -1,5 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase, User } from '../lib/supabase';
+
+interface User {
+  id: string;
+  name: string;
+  language: 'hi' | 'en' | 'hinglish';
+  created_at: string;
+  updated_at: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -12,6 +19,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'bharat_sahayak_user';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,54 +28,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-      } else {
-        setUser(null);
-        setIsOnboarded(false);
-        setIsLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
-  const checkUser = async () => {
+  const checkUser = () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await loadUserProfile(session.user.id);
-      } else {
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error('Error checking user:', error);
-      setIsLoading(false);
-    }
-  };
-
-  const loadUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        setUser(data);
+      const storedUser = localStorage.getItem(STORAGE_KEY);
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
         setIsOnboarded(true);
-      } else {
-        setIsOnboarded(false);
       }
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      console.error('Error loading user from localStorage:', error);
     } finally {
       setIsLoading(false);
     }
@@ -74,22 +47,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInAnonymously = async (name: string, language: 'hi' | 'en' | 'hinglish') => {
     try {
-      const { data, error } = await supabase.auth.signInAnonymously();
-      if (error) throw error;
+      const newUser: User = {
+        id: `user_${Date.now()}`,
+        name,
+        language,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-      if (data.user) {
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert({
-            id: data.user.id,
-            name,
-            language,
-          });
-
-        if (insertError) throw insertError;
-
-        await loadUserProfile(data.user.id);
-      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
+      setUser(newUser);
+      setIsOnboarded(true);
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;
@@ -98,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      localStorage.removeItem(STORAGE_KEY);
       setUser(null);
       setIsOnboarded(false);
     } catch (error) {
@@ -111,14 +79,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ name, language, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
+      const updatedUser: User = {
+        ...user,
+        name,
+        language,
+        updated_at: new Date().toISOString(),
+      };
 
-      if (error) throw error;
-
-      setUser({ ...user, name, language });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
+      setUser(updatedUser);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;

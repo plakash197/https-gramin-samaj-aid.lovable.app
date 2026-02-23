@@ -3,8 +3,16 @@ import { Clock, MessageSquare, Trash2 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase, ChatSession } from '../lib/supabase';
 import { toolsConfig } from '../data/toolsConfig';
+
+interface ChatSession {
+  id: string;
+  user_id: string;
+  tool_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function HistoryPage() {
   const { navigateTo, openChatSession } = useApp();
@@ -19,18 +27,16 @@ export default function HistoryPage() {
     }
   }, [user]);
 
-  const loadSessions = async () => {
+  const loadSessions = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
-
-      if (error) throw error;
-      setSessions(data || []);
+      const sessionsKey = `chat_sessions_${user.id}`;
+      const storedSessions = localStorage.getItem(sessionsKey);
+      if (storedSessions) {
+        const parsedSessions = JSON.parse(storedSessions);
+        setSessions(parsedSessions);
+      }
     } catch (error) {
       console.error('Error loading sessions:', error);
     } finally {
@@ -38,15 +44,20 @@ export default function HistoryPage() {
     }
   };
 
-  const deleteSession = async (sessionId: string) => {
-    try {
-      const { error } = await supabase
-        .from('chat_sessions')
-        .delete()
-        .eq('id', sessionId);
+  const deleteSession = (sessionId: string) => {
+    if (!user) return;
 
-      if (error) throw error;
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    try {
+      const sessionsKey = `chat_sessions_${user.id}`;
+      const storedSessions = localStorage.getItem(sessionsKey);
+      if (storedSessions) {
+        const parsedSessions = JSON.parse(storedSessions);
+        const updatedSessions = parsedSessions.filter((s: ChatSession) => s.id !== sessionId);
+        localStorage.setItem(sessionsKey, JSON.stringify(updatedSessions));
+        setSessions(updatedSessions);
+      }
+
+      localStorage.removeItem(`chat_session_${sessionId}`);
     } catch (error) {
       console.error('Error deleting session:', error);
     }

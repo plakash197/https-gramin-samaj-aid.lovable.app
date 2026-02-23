@@ -3,7 +3,6 @@ import { ArrowLeft, Send, Mic, Camera, Upload, X } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 import { toolsConfig, isQuestionRelevant } from '../data/toolsConfig';
 
 interface Message {
@@ -91,63 +90,57 @@ export default function EnhancedToolChat() {
     };
   }, [language]);
 
-  const loadChatHistory = async (sid: string) => {
+  const loadChatHistory = (sid: string) => {
     try {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('session_id', sid)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-
-      if (data) {
-        const loadedMessages: Message[] = data.map((msg) => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-          image: msg.image_url || undefined,
-        }));
-        setMessages(loadedMessages);
+      const storageKey = `chat_session_${sid}`;
+      const storedMessages = localStorage.getItem(storageKey);
+      if (storedMessages) {
+        setMessages(JSON.parse(storedMessages));
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
     }
   };
 
-  const saveMessage = async (role: 'user' | 'assistant', content: string, image?: string) => {
+  const saveMessage = (role: 'user' | 'assistant', content: string, image?: string) => {
     if (!user || !currentTool) return;
 
     try {
       let sid = sessionId;
 
       if (!sid) {
-        const title = content.substring(0, 50) + (content.length > 50 ? '...' : '');
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('chat_sessions')
-          .insert({
-            user_id: user.id,
-            tool_id: currentTool,
-            title,
-          })
-          .select()
-          .single();
-
-        if (sessionError) throw sessionError;
-        sid = sessionData.id;
+        sid = `session_${Date.now()}`;
         setSessionId(sid);
+
+        const title = content.substring(0, 50) + (content.length > 50 ? '...' : '');
+        const sessionsKey = `chat_sessions_${user.id}`;
+        const storedSessions = localStorage.getItem(sessionsKey);
+        const sessions = storedSessions ? JSON.parse(storedSessions) : [];
+
+        sessions.unshift({
+          id: sid,
+          user_id: user.id,
+          tool_id: currentTool,
+          title,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+        localStorage.setItem(sessionsKey, JSON.stringify(sessions));
       }
 
-      await supabase.from('chat_messages').insert({
-        session_id: sid,
+      const storageKey = `chat_session_${sid}`;
+      const storedMessages = localStorage.getItem(storageKey);
+      const allMessages = storedMessages ? JSON.parse(storedMessages) : [];
+
+      allMessages.push({
         role,
         content,
-        image_url: image || null,
+        image,
+        created_at: new Date().toISOString(),
       });
 
-      await supabase
-        .from('chat_sessions')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', sid);
+      localStorage.setItem(storageKey, JSON.stringify(allMessages));
     } catch (error) {
       console.error('Error saving message:', error);
     }
@@ -202,13 +195,13 @@ export default function EnhancedToolChat() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    await saveMessage('user', messageText, uploadedImage || undefined);
+    saveMessage('user', messageText, uploadedImage || undefined);
 
     setInput('');
     setUploadedImage(null);
     setIsLoading(true);
 
-    setTimeout(async () => {
+    setTimeout(() => {
       const toolName = config?.[language].name || '';
       const userName = user?.name || '';
 
@@ -260,7 +253,7 @@ export default function EnhancedToolChat() {
         },
       ]);
 
-      await saveMessage('assistant', aiResponse);
+      saveMessage('assistant', aiResponse);
       setIsLoading(false);
     }, 1000);
   };
