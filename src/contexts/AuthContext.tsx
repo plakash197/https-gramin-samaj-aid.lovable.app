@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 interface User {
   id: string;
   name: string;
-  language: 'hi' | 'en' | 'hinglish';
+  language: 'hi' | 'en';
   created_at: string;
   updated_at: string;
 }
@@ -12,9 +12,9 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isOnboarded: boolean;
-  signInAnonymously: (name: string, language: 'hi' | 'en' | 'hinglish') => Promise<void>;
+  signInAnonymously: (name: string, language: 'hi' | 'en') => Promise<void>;
   signOut: () => Promise<void>;
-  updateUserProfile: (name: string, language: 'hi' | 'en' | 'hinglish') => Promise<void>;
+  updateUserProfile: (name: string, language: 'hi' | 'en') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

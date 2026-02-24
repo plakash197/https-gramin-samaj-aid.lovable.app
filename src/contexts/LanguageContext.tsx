@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
-type Language = 'hi' | 'en' | 'hinglish';
+type Language = 'hi' | 'en';
 
 interface LanguageContextType {
   language: Language;
@@ -76,38 +76,6 @@ const translations: Record<Language, Record<string, string>> = {
     history: 'History',
     profile: 'Profile',
   },
-  hinglish: {
-    appName: 'Bharat Sahayak',
-    welcome: 'Swagat Hai',
-    dashboard: 'Dashboard',
-    aboutMe: 'Mere Baare Mein',
-    back: 'Wapas Jaayein',
-    send: 'Bhejein',
-    typeMessage: 'Apna sawal likhein...',
-    listening: 'Sun raha hoon...',
-    camera: 'Camera',
-    upload: 'Upload',
-    mafi: 'Maafi!',
-    mafiMessage: 'Yeh sawal is tool se related nahi hai. Kripya sahi tool ka use karein.',
-    mandiName: 'Mandi Bhav',
-    mandiDesc: 'Taaza fasalon ke daam jaanein',
-    graminName: 'Gramin Sahayata',
-    graminDesc: 'Gaon ke liye yojanaayein aur madad',
-    nyayName: 'Nyay Sahayak',
-    nyayDesc: 'Kanooni salah aur adhikar',
-    dawaiName: 'Dawai Madad',
-    dawaiDesc: 'Dawaiyon ki jaankari',
-    schoolName: 'School Saathi',
-    schoolDesc: 'Homework aur padhai mein madad',
-    shuddhatName: 'Shuddh Parakh',
-    shuddhatDesc: 'Khane mein milawat ki jaanch',
-    sudhaarName: 'Bharat Sudhaar',
-    sudhaarDesc: 'Samasyaon ki shikayat',
-    superAIName: 'Super AI',
-    superAIDesc: 'Har sawal ka jawaab',
-    history: 'History',
-    profile: 'Profile',
-  },
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -120,7 +88,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const toggleLanguage = () => {
     setLanguageState((prev) => {
       if (prev === 'hi') return 'en';
-      if (prev === 'en') return 'hinglish';
       return 'hi';
     });
   };
