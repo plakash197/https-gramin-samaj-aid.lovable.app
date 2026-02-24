@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_KEY = "AIzaSyBwbRjHFX6O8BJalbaJ0lNOi1L1OYW-lwc"; 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 interface GeminiMessage {
@@ -28,29 +28,31 @@ export async function callGeminiAPI(
   toolContext?: string
 ): Promise<string> {
   try {
+    // Gemini 1.5 Flash ke liye system instruction ko user/model ki chat history ke taur par bhej rahe hain
     const messages: GeminiMessage[] = [
+      {
+        role: 'user',
+        parts: [{ text: `INSTRUCTIONS: ${toolContext || 'You are a helpful AI assistant for Bharat Sahayak app.'}` }]
+      },
+      {
+        role: 'model',
+        parts: [{ text: 'Understood. I will provide expert assistance according to these instructions.' }]
+      },
       {
         role: 'user',
         parts: [
           { text: userMessage },
-          ...(imageBase64
-            ? [
-                {
-                  inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: imageBase64,
-                  },
-                },
-              ]
-            : []),
+          ...(imageBase64 ? [{
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: imageBase64,
+            },
+          }] : []),
         ],
       },
     ];
 
-    const systemPrompt = toolContext || 'You are a helpful AI assistant for Bharat Sahayak app.';
-
     const requestBody = {
-      system: systemPrompt,
       contents: messages,
       generationConfig: {
         temperature: 0.7,
@@ -67,6 +69,8 @@ export async function callGeminiAPI(
     });
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Gemini API Error Details:', errorData);
       throw new Error(`API Error: ${response.statusText}`);
     }
 
