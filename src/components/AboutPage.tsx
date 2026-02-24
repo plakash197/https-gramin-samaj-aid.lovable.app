@@ -1,5 +1,6 @@
-import { GraduationCap, Gamepad2, Code2, Target, Lightbulb, Heart } from 'lucide-react';
+import { GraduationCap, Gamepad2, Code2, Target, Lightbulb, Heart, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import Footer from './Footer';
 
 export default function AboutPage() {
   const { language } = useLanguage();
@@ -135,6 +136,54 @@ export default function AboutPage() {
           })}
         </div>
 
+        <div className="mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center animate-slideUp">
+            {language === 'hi' ? 'मेरी अन्य Projects' : language === 'en' ? 'My Projects' : 'Meri Anya Projects'}
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <a
+              href="https://republic-day-2026-live.netlify.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="backdrop-blur-lg bg-white/70 dark:bg-gray-800/70 rounded-2xl p-8 shadow-2xl border border-white/20 dark:border-gray-700/20 hover:scale-105 transition-all animate-slideUp group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="inline-flex p-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl">
+                  <Target className="w-8 h-8 text-white" />
+                </div>
+                <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Republic Day 2026
+              </h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {language === 'hi' ? 'Republic Day की celebration के लिए बनाया गया एक interactive प्लेटफॉर्म' : language === 'en' ? 'An interactive platform for celebrating Republic Day' : 'Republic Day celebrate karne ke liye bana platform'}
+              </p>
+            </a>
+
+            <a
+              href="https://medicinefinder-webapp.netlify.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="backdrop-blur-lg bg-white/70 dark:bg-gray-800/70 rounded-2xl p-8 shadow-2xl border border-white/20 dark:border-gray-700/20 hover:scale-105 transition-all animate-slideUp group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="inline-flex p-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl">
+                  <Lightbulb className="w-8 h-8 text-white" />
+                </div>
+                <ExternalLink className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Medicine Finder
+              </h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {language === 'hi' ? 'दवाओं को खोजने और उनकी जानकारी पाने के लिए बनाया गया एक web app' : language === 'en' ? 'A web app to find medicines and get their information' : 'Dawaon ko dhundne ke liye bana hua web app'}
+              </p>
+            </a>
+          </div>
+        </div>
+
         <div className="backdrop-blur-lg bg-gradient-to-r from-orange-500/20 via-purple-500/20 to-green-500/20 dark:from-orange-500/10 dark:via-purple-500/10 dark:to-green-500/10 rounded-3xl p-8 shadow-2xl border border-white/30 dark:border-gray-700/30 text-center animate-slideUp">
           <p className="text-lg md:text-xl text-gray-800 dark:text-gray-100 leading-relaxed font-semibold mb-6">
             {language === 'hi' ? '"यह सिर्फ एक app नहीं है, यह एक सशक्त भारत की शुरुआत है।"' : language === 'en' ? '"This is not just an app, it\'s the beginning of an empowered India."' : '"Yeh sirf ek app nahi hai, yeh ek sashakt Bharat ki shuruaat hai."'}
@@ -144,6 +193,7 @@ export default function AboutPage() {
           </p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

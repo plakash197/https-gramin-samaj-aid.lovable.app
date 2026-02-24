@@ -1,6 +1,7 @@
 import { Sprout, Users, Scale, Pill, BookOpen, FlaskConical, MapPin, Sparkles } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import Footer from './Footer';
 
 const tools = [
   {
@@ -105,15 +106,8 @@ export default function Dashboard() {
           })}
         </div>
 
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => navigateTo('about')}
-            className="text-orange-600 dark:text-orange-400 hover:underline font-semibold transition-colors"
-          >
-            {t('aboutMe')}
-          </button>
-        </div>
       </div>
+      <Footer />
     </div>
   );
 }

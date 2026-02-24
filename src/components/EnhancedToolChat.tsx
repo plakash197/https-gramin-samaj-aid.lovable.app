@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Send, Mic, Camera, Upload, X } from 'lucide-react';
+import { ArrowLeft, Send, Mic, Camera, Upload, X, ImageIcon } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toolsConfig, isQuestionRelevant } from '../data/toolsConfig';
+import { callGeminiAPI, getToolSystemPrompt } from '../lib/gemini';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -26,6 +27,8 @@ export default function EnhancedToolChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const silenceTimeoutRef = useRef<any>(null);
 
   const config = currentTool ? toolsConfig[currentTool] : null;
@@ -201,49 +204,11 @@ export default function EnhancedToolChat() {
     setUploadedImage(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      const toolName = config?.[language].name || '';
-      const userName = user?.name || '';
+    try {
+      const imageData = uploadedImage?.split(',')[1];
+      const systemPrompt = currentTool ? getToolSystemPrompt(currentTool, language) : '';
 
-      const greeting = language === 'hi' ? `नमस्ते ${userName}!` : language === 'en' ? `Hello ${userName}!` : `Namaste ${userName}!`;
-
-      let aiResponse = `${greeting}\n\n`;
-
-      aiResponse += language === 'hi'
-        ? `आपने "${messageText}" के बारे में पूछा है।\n\n`
-        : language === 'en'
-        ? `You asked about "${messageText}".\n\n`
-        : `Aapne "${messageText}" ke baare mein poocha hai.\n\n`;
-
-      aiResponse += language === 'hi'
-        ? '**Online समाधान (सबसे पहले यही करें):**\n'
-        : language === 'en'
-        ? '**Online Solution (Do this first):**\n'
-        : '**Online Solution (Pehle yahi karein):**\n';
-
-      aiResponse += language === 'hi'
-        ? '1. सरकारी पोर्टल: https://example.gov.in\n'
-        : language === 'en'
-        ? '1. Government Portal: https://example.gov.in\n'
-        : '1. Sarkari Portal: https://example.gov.in\n';
-
-      aiResponse += language === 'hi'
-        ? '2. डिजिटल आवेदन: आप यहाँ online apply कर सकते हैं\n\n'
-        : language === 'en'
-        ? '2. Digital Application: You can apply online here\n\n'
-        : '2. Digital Application: Aap yahan online apply kar sakte hain\n\n';
-
-      aiResponse += language === 'hi'
-        ? '**क्या मैं आपके लिए form भर दूं?**\n'
-        : language === 'en'
-        ? '**Should I fill the form for you?**\n'
-        : '**Kya main aapke liye form bhar doon?**\n';
-
-      aiResponse += language === 'hi'
-        ? 'बस "हाँ" बोलें और मैं जरूरी जानकारी माँगूंगा।'
-        : language === 'en'
-        ? 'Just say "Yes" and I will ask for necessary information.'
-        : 'Bas "Haan" bolein aur main zaroori jaankari maangunga.';
+      const aiResponse = await callGeminiAPI(messageText, imageData, systemPrompt);
 
       setMessages((prev) => [
         ...prev,
@@ -254,8 +219,26 @@ export default function EnhancedToolChat() {
       ]);
 
       saveMessage('assistant', aiResponse);
+    } catch (error) {
+      console.error('Error calling Gemini API:', error);
+      const errorMessage = language === 'hi'
+        ? 'कृपया माफ करें, कोई त्रुटि हुई। कृपया फिर से प्रयास करें।'
+        : language === 'en'
+        ? 'Sorry, an error occurred. Please try again.'
+        : 'Kripaya kshama karein, koi error hua hai.';
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: errorMessage,
+        },
+      ]);
+
+      saveMessage('assistant', errorMessage);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   if (showRedirect) {
@@ -375,30 +358,35 @@ export default function EnhancedToolChat() {
           )}
 
           <div className="flex gap-2">
-            {hasCamera && (
-              <>
-                <button
-                  onClick={handleCameraClick}
-                  className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
-                >
-                  <Camera size={20} />
-                </button>
-                <button
-                  onClick={handleCameraClick}
-                  className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
-                >
-                  <Upload size={20} />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-              </>
-            )}
+            <button
+              onClick={() => cameraInputRef.current?.click()}
+              className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+              title="Take photo"
+            >
+              <Camera size={20} />
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+              title="Upload image"
+            >
+              <ImageIcon size={20} />
+            </button>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
 
             <button
               onClick={handleMicClick}
