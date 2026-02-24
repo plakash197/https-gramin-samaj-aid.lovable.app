@@ -104,7 +104,7 @@ Ye sirf ek app nahi hai, ye ek Sashakt Bharat ki shuruat hai. Main ise hamesha f
       const timeout = setTimeout(() => {
         setDisplayedText((prev) => prev + fullText[currentIndex]);
         setCurrentIndex((prev) => prev + 1);
-      }, 50);
+      }, 6.9);
 
       return () => clearTimeout(timeout);
     }
