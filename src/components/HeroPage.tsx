@@ -140,7 +140,7 @@ Ye sirf ek app nahi hai, ye ek Sashakt Bharat ki shuruat hai. Main ise hamesha f
           </p>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center fixed bottom-5 left-[45%]">
           <button
             onClick={() => navigateTo('dashboard')}
             className="bg-gradient-to-r from-orange-500 to-green-500 hover:from-orange-600 hover:to-green-600 text-white font-semibold py-4 px-12 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
